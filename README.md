@@ -3,8 +3,8 @@
 A desktop study tool built with **Python** and **Tkinter**. Create an account, organize
 study material into flashcard sets, and reinforce learning through a self-paced **Learn**
 mode and a scored **Quiz** mode. The app ships with two interchangeable database
-backends — **MySQL** and **SQLite** — so you can run it against either a client-server
-database or a zero-setup embedded one.
+backends — **PostgreSQL** and **SQLite** — so you can run it against either a
+client-server database or a zero-setup embedded one.
 
 ## Features
 
@@ -21,14 +21,14 @@ database or a zero-setup embedded one.
 
 | File | Purpose |
 |---|---|
-| `Account.py` | Login / sign-up UI — **MySQL** backend |
+| `Account.py` | Login / sign-up UI — **PostgreSQL** backend |
 | `Account1.py` | Login / sign-up UI — **SQLite** backend |
-| `Edu.py` | Main app (sets, Learn mode, Quiz mode) — **MySQL** backend |
+| `Edu.py` | Main app (sets, Learn mode, Quiz mode) — **PostgreSQL** backend |
 | `Edu1.py` | Main app (sets, Learn mode, Quiz mode) — **SQLite** backend |
 | `auth_utils.py` | Shared password hashing/verification helper |
 | `name.txt` | Auto-generated session file (created at login, don't edit by hand) |
 
-> The MySQL pair (`Account.py` + `Edu.py`) and the SQLite pair (`Account1.py` + `Edu1.py`)
+> The PostgreSQL pair (`Account.py` + `Edu.py`) and the SQLite pair (`Account1.py` + `Edu1.py`)
 > are independent — pick **one** pair to run, not a mix of the two.
 
 ## Prerequisites
@@ -38,11 +38,11 @@ database or a zero-setup embedded one.
   ```bash
   pip install ttkbootstrap ttkthemes tkinterweb
   ```
-- For the MySQL backend only, also install:
+- For the PostgreSQL backend only, also install:
   ```bash
-  pip install mysql-connector-python
+  pip install psycopg2-binary
   ```
-  and have a MySQL server running and reachable.
+  and have a PostgreSQL server running and reachable.
 
 ## Getting Started
 
@@ -55,26 +55,29 @@ python Account1.py
 A `flashcards.db` file is created automatically in the project folder the first time
 you run it. Sign up, then log in — the app will open `Edu1.py` for you automatically.
 
-### Option B — MySQL
+### Option B — PostgreSQL
 
-1. Create a database for the app (any name you like).
-2. Set the following environment variables before launching (defaults shown — change
-   them to match your setup):
-
+1. Create a database for the app, e.g.:
    ```bash
-   export FLASHCARDS_DB_HOST=localhost
-   export FLASHCARDS_DB_USER=root
-   export FLASHCARDS_DB_PASSWORD=yourpassword
-   export FLASHCARDS_DB_NAME=flashcards_app
+   createdb flashcards_app
+   ```
+2. Open `Account.py` (and `Edu.py`) and update the `psycopg2.connect(...)` call near the
+   bottom of the file to match your local setup:
+
+   ```python
+   conn = psycopg2.connect(
+       host="localhost",
+       database="flashcards_app",
+       user="postgres",
+       password="your_postgres_password",
+       port=5432,
+   )
    ```
 
-   On Windows (PowerShell):
-   ```powershell
-   $env:FLASHCARDS_DB_HOST="localhost"
-   $env:FLASHCARDS_DB_USER="root"
-   $env:FLASHCARDS_DB_PASSWORD="yourpassword"
-   $env:FLASHCARDS_DB_NAME="flashcards_app"
-   ```
+   > For anything beyond local testing, it's worth moving `password` (and the other
+   > values) into environment variables rather than leaving them in source — e.g.
+   > `os.environ.get("FLASHCARDS_DB_PASSWORD")` — so real credentials never end up in
+   > version control.
 
 3. Run:
    ```bash
@@ -102,7 +105,7 @@ The login UI and the main application run as two separate processes rather than 
 User → Login/Signup (Account.py / Account1.py)
             │  on success, writes name.txt and launches the main app
             ▼
-       Main App (Edu.py / Edu1.py) → Database (MySQL / SQLite)
+       Main App (Edu.py / Edu1.py) → Database (PostgreSQL / SQLite)
 ```
 
 `name.txt` is the handoff point — it stores the logged-in username and account ID so
@@ -119,6 +122,9 @@ the main application knows who's signed in after being launched as a new process
 
 ## Known Limitations / Possible Next Steps
 
+- The PostgreSQL connection details (host, user, password, port) are hardcoded in
+  `Account.py` / `Edu.py`. Moving them to environment variables is a good next step
+  before sharing the code or deploying it anywhere.
 - `History` is defined and ready to use, but no quiz results are written to it yet —
   wiring this up would enable a "past attempts" view.
 - The login ↔ main-app handoff uses a file-based session and separate processes;
