@@ -378,7 +378,7 @@ if __name__ == "__main__":
             host="localhost",
             database="flashcards_app",
             user="postgres",
-            password="1212",
+            password="password",
             port="5432"
         )
         create_tables(conn)
